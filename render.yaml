@@ -1,0 +1,49 @@
+# Render Blueprint: one web service runs the API and serves the website on the same origin.
+# Render dashboard > New > Blueprint > pick this repo. You will be asked for the values marked sync: false.
+services:
+  - type: web
+    name: novafood
+    runtime: node
+    plan: free
+    region: singapore
+    # devDependencies (vite, tsup, typescript) are needed to build, even though NODE_ENV is production.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.19.0
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: 1
+      - key: COOKIE_SECURE
+        value: true
+      - key: WEB_DIST_DIR
+        value: ../web/dist
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      # The public URL Render gives the service, e.g. https://novafood.onrender.com
+      - key: CLIENT_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: NovaFood <onboarding@resend.dev>
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
