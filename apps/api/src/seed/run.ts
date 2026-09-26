@@ -9,7 +9,7 @@
 import bcrypt from 'bcryptjs';
 import mongoose, { Types } from 'mongoose';
 import { type OrderStatus, computeUnitPrice, pointsEarnedFor, priceOrder, rupeesToPaise } from '@novafood/shared';
-import { connectDatabase, disconnectDatabase } from '../config/db';
+import { DatabaseConnectionError, connectDatabase, disconnectDatabase } from '../config/db';
 import { loadEnv } from '../config/env';
 import { createLogger } from '../lib/logger';
 import { orderNumber, randomSuffixSafe, slugify } from './util';
@@ -316,7 +316,7 @@ async function main() {
 }
 
 main().catch(async (err) => {
-  console.error(err);
+  console.error(err instanceof DatabaseConnectionError ? `\n  ✖ ${err.message}\n` : err);
   await disconnectDatabase().catch(() => undefined);
   process.exit(1);
 });

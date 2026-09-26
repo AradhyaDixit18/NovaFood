@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { createApp } from './app';
-import { connectDatabase, disconnectDatabase } from './config/db';
+import { DatabaseConnectionError, connectDatabase, disconnectDatabase } from './config/db';
 import { EnvError, loadEnv } from './config/env';
 import { createContext } from './context';
 import { attachRealtime } from './realtime/socket';
@@ -42,4 +42,9 @@ async function main(): Promise<void> {
   process.on('unhandledRejection', (reason) => ctx.logger.error({ reason }, 'Unhandled promise rejection'));
 }
 
-void main();
+main().catch((err: unknown) => {
+  // One clear line instead of a stack trace for the failures people actually hit on first run.
+  if (err instanceof DatabaseConnectionError) console.error(`\n  ✖ ${err.message}\n`);
+  else console.error(err);
+  process.exit(1);
+});
