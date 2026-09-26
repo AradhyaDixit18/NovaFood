@@ -148,12 +148,41 @@ describe('email verification & password reset', () => {
 });
 
 describe('rate limiting', () => {
-  it('throttles repeated login attempts', async () => {
+  it('throttles repeated failed logins', async () => {
     const limited = createTestKit({ rateLimits: true });
     let last = 0;
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 22; i++) {
       last = (await limited.request.post('/api/auth/login').send({ email: 'x@test.dev', password: 'Nope12345' })).status;
     }
     expect(last).toBe(429);
+  });
+
+  it('does not let page-load refreshes or successful logins use up the login budget', async () => {
+    const limited = createTestKit({ rateLimits: true });
+    const user = await createUser(limited);
+    // Anonymous refreshes run on every page load; 40 of them used to lock the login out.
+    for (let i = 0; i < 40; i++) {
+      expect((await limited.request.post('/api/auth/refresh').set('X-Requested-With', 'novafood')).status).toBe(401);
+    }
+    for (let i = 0; i < 25; i++) {
+      expect((await limited.request.post('/api/auth/login').send({ email: user.email, password: user.password })).status).toBe(200);
+    }
+  });
+});
+
+describe('session hint cookie', () => {
+  it('is set, readable and secret-free on login, and cleared on logout', async () => {
+    const user = await createUser(kit);
+    const login = await kit.request.post('/api/auth/login').send({ email: user.email, password: user.password });
+    const cookies = ([] as string[]).concat(login.headers['set-cookie'] ?? []);
+    const hint = cookies.find((c) => c.startsWith('nf_session='))!;
+    expect(hint).toMatch(/^nf_session=1;/);
+    expect(hint).toMatch(/Path=\//);
+    expect(hint).not.toMatch(/HttpOnly/i);
+    expect(cookies.find((c) => c.startsWith('nf_rt='))).toMatch(/HttpOnly/i);
+
+    const out = await kit.request.post('/api/auth/logout').set('X-Requested-With', 'novafood');
+    const cleared = ([] as string[]).concat(out.headers['set-cookie'] ?? []).find((c) => c.startsWith('nf_session='))!;
+    expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970/);
   });
 });

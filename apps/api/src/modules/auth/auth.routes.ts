@@ -16,6 +16,11 @@ import { toUserDTO } from '../../serializers';
 import * as auth from './auth.service';
 
 export const REFRESH_COOKIE = 'nf_rt';
+/**
+ * Readable, secret-free flag that a refresh cookie exists, so the web app can skip the refresh
+ * call (and its 401) for visitors who were never signed in. It grants nothing on its own.
+ */
+export const SESSION_HINT_COOKIE = 'nf_session';
 
 export function createAuthRouter(ctx: AppContext): Router {
   const router = Router();
@@ -31,41 +36,50 @@ export function createAuthRouter(ctx: AppContext): Router {
     ...(expires ? { expires } : {}),
   });
 
+  const setSessionCookies = (res: Response, token: string, expires: Date) => {
+    res.cookie(REFRESH_COOKIE, token, cookieOptions(expires));
+    res.cookie(SESSION_HINT_COOKIE, '1', { ...cookieOptions(expires), httpOnly: false, path: '/' });
+  };
+  const clearSessionCookies = (res: Response) => {
+    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    res.clearCookie(SESSION_HINT_COOKIE, { ...cookieOptions(), httpOnly: false, path: '/' });
+  };
+
   const meta = (req: Request) => ({ userAgent: req.get('user-agent'), ip: req.ip });
 
   const respondWithSession = (res: Response, result: Awaited<ReturnType<typeof auth.login>>, status = 200) => {
-    res.cookie(REFRESH_COOKIE, result.refreshToken, cookieOptions(result.refreshExpiresAt));
+    setSessionCookies(res, result.refreshToken, result.refreshExpiresAt);
     send(res, { user: toUserDTO(result.user), accessToken: result.accessToken }, status);
   };
 
-  router.post('/register', limits.auth, async (req, res) => {
+  router.post('/register', limits.register, async (req, res) => {
     const input = parse(registerSchema, req.body);
     respondWithSession(res, await auth.register(ctx, input, meta(req)), 201);
   });
 
-  router.post('/login', limits.auth, async (req, res) => {
+  router.post('/login', limits.login, async (req, res) => {
     const input = parse(loginSchema, req.body);
     respondWithSession(res, await auth.login(ctx, input, meta(req)));
   });
 
-  router.post('/refresh', limits.auth, requireCsrfHeader, async (req, res) => {
+  router.post('/refresh', limits.session, requireCsrfHeader, async (req, res) => {
     try {
       respondWithSession(res, await auth.refresh(ctx, req.cookies?.[REFRESH_COOKIE], meta(req)));
     } catch (err) {
-      res.clearCookie(REFRESH_COOKIE, cookieOptions());
+      clearSessionCookies(res);
       throw err;
     }
   });
 
   router.post('/logout', requireCsrfHeader, async (req, res) => {
     await auth.logout(ctx, req.cookies?.[REFRESH_COOKIE]);
-    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    clearSessionCookies(res);
     send(res, { ok: true });
   });
 
   router.post('/logout-all', requireAuth, async (req, res) => {
     await auth.logoutEverywhere(ctx, currentUser(req).id);
-    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    clearSessionCookies(res);
     send(res, { ok: true });
   });
 
@@ -74,7 +88,7 @@ export function createAuthRouter(ctx: AppContext): Router {
     send(res, { user: toUserDTO(user) });
   });
 
-  router.post('/verify-email', limits.auth, async (req, res) => {
+  router.post('/verify-email', limits.sensitive, async (req, res) => {
     const { token } = parse(verifyEmailSchema, req.body);
     const user = await auth.verifyEmail(ctx, token);
     send(res, { user: toUserDTO(user) });
@@ -91,16 +105,16 @@ export function createAuthRouter(ctx: AppContext): Router {
     send(res, { ok: true, message: 'If an account exists for that email, a reset link is on its way.' });
   });
 
-  router.post('/reset-password', limits.auth, async (req, res) => {
+  router.post('/reset-password', limits.sensitive, async (req, res) => {
     const { token, password } = parse(resetPasswordSchema, req.body);
     await auth.resetPassword(ctx, token, password);
     send(res, { ok: true });
   });
 
-  router.post('/change-password', requireAuth, limits.auth, async (req, res) => {
+  router.post('/change-password', requireAuth, limits.sensitive, async (req, res) => {
     const { currentPassword, newPassword } = parse(changePasswordSchema, req.body);
     await auth.changePassword(ctx, currentUser(req).id, currentPassword, newPassword);
-    res.clearCookie(REFRESH_COOKIE, cookieOptions());
+    clearSessionCookies(res);
     send(res, { ok: true });
   });
 
