@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/plus-jakarta-sans';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * NovaFood design tokens. Components use semantic names (surface, ink, brand...) so the dark
+ * theme only has to redefine the variables, never the components.
+ */
+@theme {
+  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #ff4d2e;
+  --color-brand-strong: #e63312;
+  --color-brand-soft: #ffe3dc;
+  --color-grape: #6c2bd9;
+  --color-grape-soft: #ece3ff;
+  --color-lime: #c6f432;
+  --color-bubble: #ff7ac6;
+  --color-sun: #ffc93c;
+  --color-mint: #2ec4a0;
+
+  --color-canvas: var(--nf-canvas);
+  --color-surface: var(--nf-surface);
+  --color-surface-2: var(--nf-surface-2);
+  --color-ink: var(--nf-ink);
+  --color-ink-soft: var(--nf-ink-soft);
+  --color-ink-faint: var(--nf-ink-faint);
+  --color-line: var(--nf-line);
+  --color-veg: #1f9d55;
+  --color-nonveg: #c0392b;
+  --color-success: #139a6b;
+  --color-warning: #c77700;
+  --color-danger: #d92d20;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  --shadow-soft: 0 10px 30px -12px rgb(27 15 59 / 0.25);
+  --shadow-lift: 0 22px 50px -20px rgb(27 15 59 / 0.35);
+  --shadow-sticker: 3px 3px 0 0 var(--nf-ink);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+  --animate-pop: pop 0.35s var(--ease-spring);
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.8); }
+    100% { transform: scale(1); }
+  }
+}
+
+:root {
+  --nf-canvas: #fff7f0;
+  --nf-surface: #ffffff;
+  --nf-surface-2: #fff0e6;
+  --nf-ink: #1b0f3b;
+  --nf-ink-soft: #4a3d6e;
+  --nf-ink-faint: #8b80a8;
+  --nf-line: #efe2d6;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --nf-canvas: #0f0a1f;
+  --nf-surface: #1a1330;
+  --nf-surface-2: #241a42;
+  --nf-ink: #f7f1ff;
+  --nf-ink-soft: #c9bfe6;
+  --nf-ink-faint: #8a7fb0;
+  --nf-line: #2f2553;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-grape);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--color-lime);
+    color: #1b0f3b;
+  }
+  dialog::backdrop {
+    background: rgb(15 10 31 / 0.55);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@layer utilities {
+  .container-nf {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .glass {
+    @apply border border-white/40 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-white/5;
+  }
+  .sticker {
+    @apply rounded-full border-2 border-ink bg-lime px-3 py-1 font-display text-sm font-bold text-[#1b0f3b];
+    box-shadow: var(--shadow-sticker);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

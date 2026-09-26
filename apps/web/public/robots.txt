@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /partner
+Disallow: /checkout
+Disallow: /profile
+
+Sitemap: /sitemap.xml
