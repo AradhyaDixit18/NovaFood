@@ -1,0 +1,40 @@
+{
+  "name": "novafood",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NovaFood: a full-stack, real-time food ordering platform with a playful 3D experience.",
+  "license": "MIT",
+  "author": "Aradhya Dixit",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c magenta,cyan \"npm run dev -w @novafood/api\" \"npm run dev -w @novafood/web\"",
+    "build": "npm run build -w @novafood/api && npm run build -w @novafood/web",
+    "start": "npm run start -w @novafood/api",
+    "seed": "npm run seed -w @novafood/api",
+    "test": "npm run test -w @novafood/shared && npm run test -w @novafood/api && npm run test -w @novafood/web",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck -w @novafood/shared && npm run typecheck -w @novafood/api && npm run typecheck -w @novafood/web",
+    "format": "prettier --write .",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "1.56.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0"
+  }
+}
