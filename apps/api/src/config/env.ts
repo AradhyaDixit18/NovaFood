@@ -12,6 +12,8 @@ const schema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   /** Number of reverse proxies in front of the app (1 on Render/Railway), used for client IPs. */
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+  /** Path to the built web app (apps/web/dist). When set, the API also serves the site on the same origin. */
+  WEB_DIST_DIR: z.string().optional(),
 
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
 

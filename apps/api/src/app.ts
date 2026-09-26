@@ -26,6 +26,7 @@ import { createRecommendationsRouter } from './modules/recommendations/recommend
 import { createReviewsRouter } from './modules/reviews/reviews.routes';
 import { createUploadsRouter } from './modules/uploads/uploads.routes';
 import { createUsersRouter } from './modules/users/users.routes';
+import { mountWebApp } from './web';
 
 export function createApp(ctx: AppContext): Express {
   const app = express();
@@ -44,8 +45,9 @@ export function createApp(ctx: AppContext): Express {
     }),
   );
   app.use(
+    '/api',
     helmet({
-      // The API serves JSON only; the web app sets its own CSP.
+      // The API serves JSON only; pages served by mountWebApp get their own CSP.
       contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
       crossOriginResourcePolicy: { policy: 'same-site' },
     }),
@@ -102,7 +104,7 @@ export function createApp(ctx: AppContext): Express {
   });
 
   /** Sitemap of public pages; the web host proxies /sitemap.xml here. */
-  app.get('/api/sitemap.xml', async (_req, res) => {
+  app.get(['/api/sitemap.xml', '/sitemap.xml'], async (_req, res) => {
     const base = primaryClientUrl(ctx.env);
     const restaurants = await Restaurant.find({ status: 'APPROVED' }).select('slug updatedAt').lean();
     const urls = [
@@ -117,6 +119,11 @@ export function createApp(ctx: AppContext): Express {
         .join('\n')}\n</urlset>`,
     );
   });
+
+  if (ctx.env.WEB_DIST_DIR) {
+    const mounted = mountWebApp(app, ctx.env.WEB_DIST_DIR);
+    if (!mounted) ctx.logger.warn({ dir: ctx.env.WEB_DIST_DIR }, 'WEB_DIST_DIR has no index.html; serving the API only');
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler(ctx));
