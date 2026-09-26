@@ -28,6 +28,15 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // An effect must return nothing or a cleanup function. `useEffect(() => fn())` returns whatever
+      // fn returns; Chrome 152's scrollTo returns a Promise, which crashed the whole app on navigation.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CallExpression[callee.name=/^use(Layout|Insertion)?Effect$/] > ArrowFunctionExpression[expression=true]',
+          message: 'Give effect callbacks a block body: useEffect(() => { ... }). An expression body returns its value to React as a cleanup.',
+        },
+      ],
     },
   },
 );

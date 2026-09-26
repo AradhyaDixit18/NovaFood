@@ -27,7 +27,9 @@ function Customizer({ target, onClose }: { target: Target; onClose: () => void }
   const [note, setNote] = useState('');
   const [open, setOpen] = useState(true);
 
-  useEffect(() => setOpen(true), [food._id]);
+  useEffect(() => {
+    setOpen(true);
+  }, [food._id]);
 
   const addOnIds = Object.values(picked).flat();
   const unit = useMemo(() => {

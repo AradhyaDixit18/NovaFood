@@ -61,7 +61,10 @@ function Shell() {
   const location = useLocation();
   const reduced = useReducedMotion();
   useRealtimeBridge();
-  useEffect(() => window.scrollTo({ top: 0 }), [location.pathname]);
+  useEffect(() => {
+    // Braces matter: newer Chrome returns a Promise from scrollTo, and an effect must return nothing or a cleanup function.
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-dvh flex-col">
